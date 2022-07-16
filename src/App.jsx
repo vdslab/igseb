@@ -2,11 +2,45 @@ import * as d3 from "d3";
 import { cluster } from "d3";
 import { useEffect, useState,useRef } from "react";
 
-
 function App() {
 
-    const findBiclusters = (i, j) => {
+    //実装は隣接行列
+    const cluster_number = 10;
+    const minSize = 5;
+    const mu = 0.5;
 
+    const findBiclusters = (i, j) => {
+        //SとTはグループノードCiとCjの部分集合
+        //bijはEijのエッジの部分集合
+        let bij = []
+        
+        //グループノードCiとCjの要素uの近傍ノードのセットkeys
+        const keys = neighbors(u);
+
+        for(const T of keys) {
+            M = new Map();
+
+            for(const v of T) {
+
+                for(const u of neighbors(v)) {
+                    if(u in M) {
+                        M[u] += 1
+                    } else {
+                        m[u] = 1
+                    }
+                }
+            }
+
+            const S = u;
+            const Etmp = Eij;
+
+            if(Etmp > minSize) {
+                Bij = add;
+            }
+        }
+
+        
+        return Bij;
     }
 
 
