@@ -9,7 +9,7 @@ function App() {
     const minSize = 5;
     const mu = 0.5;
     const [width, height] = [800, 800];
-
+    const C = {0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[], 7:[], 8:[], 9:[]};
     const [nodes, setNodes] = useState([]);
     const [links, setLinks] = useState([]);
 
@@ -19,7 +19,11 @@ function App() {
         let bij = []
         
         //グループノードCiとCjの要素uの近傍ノードのセットkeys
-        const keys = neighbors(u);
+        const uset = new Set(C[i].concat(C[j]));//uset < Ci V Cj
+        const keys = [];
+        for(const u of uset) {
+            keys.push(neighbors(u));
+        }
 
         for(const T of keys) {
             M = new Map();
@@ -53,6 +57,16 @@ function App() {
         const igseb = async () => {
             const nodeData = await(await fetch('../data/node.json')).json();
             const linkData = await(await fetch('../data/edge.json')).json();
+
+            
+            for(const node of nodeData) {
+                C[Number(node["group"])].push(node["id"]);
+                console.log(Number(node["group"]))
+            }
+
+            //console.log(C);
+            //const s = new Set([1, 1, 2, 2, 3].concat([2, 2, 3, 3, 4, 5]));
+            console.log(s)
             console.log(nodeData);
             console.log(linkData);
 
@@ -63,7 +77,7 @@ function App() {
                             .forceSimulation()
                             .nodes(nodes)
                             .force("link", d3.forceLink().strength(0).id((d) => d['id']))
-                            .force("center", d3.forceCenter(100, 100))
+                            .force("center", d3.forceCenter(300, 300))
                             .force('charge', d3.forceManyBody().strength(0.5))
                             .force('collision', d3.forceCollide()
                                   .radius(function (d) {
@@ -155,9 +169,19 @@ function App() {
                 })}
             </g>
 
-            <line x1="0" y1="80" x2="100" y2="20" stroke="black" />
-          
-  
+            <g className="nodes">
+                {nodes.map((node) => {
+                    return(
+                        <circle
+                        className="node"
+                        r = {6}
+                        
+                        cx = {node.x}
+                        cy = {node.y}
+                        />
+                    );
+                })}
+            </g>
             
         </svg>
       </div>
