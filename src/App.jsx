@@ -1,19 +1,31 @@
 import * as d3 from "d3";
-import { cluster } from "d3";
+import { forceCluster } from 'd3-force-cluster';
 import { useEffect, useState,useRef } from "react";
 
 function App() {
 
     //実装は隣接行列
     const cluster_number = 10;
-    const minSize = 5;
-    const mu = 0.2;
-    const [width, height] = [800, 800];
+    const minSize = 7;
+    const mu = 0.8;
+    const [width, height] = [1200, 800];
     const C = {0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[], 7:[], 8:[], 9:[]};
     let Esub = new Array();
     let neighbors;
     const [nodes, setNodes] = useState([]);
     const [links, setLinks] = useState([]);
+    const cluster_color = {
+        "0":"rgb(255,255,0)",
+        "1":"rgb(255,0,0)",
+        "2":"rgb(0,255,0)",
+        "3":"rgb(0,0,255)",
+        "4":"rgb(0,255,255)",
+        "5":"rgb(255,0,255)",
+        "6":"rgb(128,128,0)",
+        "7":"rgb(128,0,128)",
+        "8":"rgb(0,0,0)",
+        "9":"rgb(0,128,128)",
+    }
 
  
     const findBiclusters = (i, j) => {
@@ -25,28 +37,28 @@ function App() {
         //グループノードCiとCjの要素uの近傍ノードのセットkeys
         //SとTはノード
         const uset = new Set(C[i].concat(C[j]));//uset < Ci V Cj
-        console.log(i);
-        console.log(j);
-        console.log(C[i])
-        console.log(C[j])
-        console.log(uset)
+        //console.log(i);
+        //console.log(j);
+        //console.log(C[i])
+        //console.log(C[j])
+        //console.log(uset)
         const keys = [];
         for(const u of uset) {
             keys.push(neighbors[u]);
         }
-        console.log(neighbors)
-        console.log(keys);
+        //console.log(neighbors)
+        //console.log(keys);
         for(const T of keys) {
             let M = new Map();
 
             for(const v of T) {
 
-                console.log(neighbors[v])
+                //console.log(neighbors[v])
                 for(const u of neighbors[v]) {
-                    console.log(M)
+                    //console.log(M)
                     if(M.has(u) === true) {
                         M.set(u,M.set(u) + 1)
-                        console.log("YAY")
+                        //console.log("YAY")
                     } else {
                         M.set(u, 1)
                         //console.log("yay")
@@ -68,7 +80,12 @@ function App() {
             for(const snode of S) {
                 for(const tnode of T) {
                     if(neighbors[snode].includes(tnode)) {
-                        Etmp.push({"source":snode, "target":tnode});
+                        const source  = snode <= tnode?snode:tnode;
+                        const target = snode > tnode?snode:tnode;
+
+                     
+
+                        Etmp.push({"source":source, "target":target});
                     }
                 }
             }
@@ -79,8 +96,12 @@ function App() {
             }
         }
 
-        
-        return bij;
+        console.log(bij)
+        return bij.filter((x, i, array) => {
+            return array.findIndex((y)=> {
+                return y.source === x.source && y.target === x.target;
+            }) === i
+        });
     }
 
 
@@ -89,11 +110,6 @@ function App() {
         const igseb = async () => {
             const nodeData = await(await fetch('../data/node.json')).json();
             const linkData = await(await fetch('../data/edge.json')).json();
-            const h = new Map();
-            h.set(1, 1);
-            console.log(h.has(1));
-            h.set(1, h.get(1)+1)
-            console.log(h.get(1))
             //隣接行列
             neighbors = new Array(nodeData.length);
             for(let i = 0; i < nodeData.length; i++) {
@@ -115,7 +131,7 @@ function App() {
                 //console.log(Number(node["group"]))
             }
 
-            //console.log(C);
+            console.log(C);
             //const s = new Set([1, 1, 2, 2, 3].concat([2, 2, 3, 3, 4, 5]));
             //console.log(s)
             console.log(nodeData);
@@ -127,21 +143,26 @@ function App() {
                             const simulation = d3
                             .forceSimulation()
                             .nodes(nodes)
+                            .force('group', forceCluster()
+                            .strength(0.9))
                             .force("link", d3.forceLink().strength(0).id((d) => d['id']))
-                            .force("center", d3.forceCenter(300, 300))
+                            .force("center", d3.forceCenter(width / 2, height/2))
                             .force('charge', d3.forceManyBody().strength(0.5))
                             .force('collision', d3.forceCollide()
                                   .radius(function (d) {
                                     return 15;
                                   })
                                   .iterations(0.5))
-                            .force('x', d3.forceX().x(100).strength(0.3))
-                            .force('y', d3.forceY().y(100).strength(0.3))
-                            .force('r', d3.forceRadial()
-                            .radius(100)
-                            .x(100)
-                            .y(100)
-                            .strength(1))
+                            .force('x', d3.forceX().x(d => {
+                                return Number(d.group) * width / 11;
+                            }
+                            ).strength(0.2))
+
+                            .force('y', d3.forceY().y(d => {
+                                return 100;
+                            }
+                            ).strength(0.3))
+                           
                             ;
             
                             const ticked = () => {
@@ -157,9 +178,7 @@ function App() {
                         }
 
 
-            console.log("$$$$$$$$$$");
-            //startSimulation(nodeData, linkData);
-            console.log("########");
+
             console.log(nodeData);
             for(let i = 0; i < cluster_number; i++) {
                 //console.log(i);
@@ -177,6 +196,11 @@ function App() {
                 }
             }
 
+            Esub = Esub.filter((x, i, array) => {
+                return array.findIndex((y)=> {
+                    return y.source === x.source && y.target === x.target;
+                }) === i
+            });
             console.log(Esub)
     
             //グラフGの描画を計算する(force-directedなど)
@@ -194,7 +218,9 @@ function App() {
                     */
                 }
             }
-    
+            console.log("$$$$$$$$$$");
+            startSimulation(nodeData, Esub);
+            console.log("########");
             //残りのエッジを描画
         }
 
@@ -208,7 +234,7 @@ function App() {
         
         <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
             <g className="links">
-                {Esub.map((link)=> {
+                {links.map((link)=> {
                     //console.log(link)
                     return(
                         <line
@@ -232,7 +258,7 @@ function App() {
                         <circle
                         className="node"
                         r = {6}
-                        
+                        style = {{fill:cluster_color[node["group"]]}}
                         cx = {node.x}
                         cy = {node.y}
                         />
