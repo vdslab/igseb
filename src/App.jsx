@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import { forceCluster } from 'd3-force-cluster';
 import { useEffect, useState,useRef } from "react";
+import { Helmet } from 'react-helmet';
 
 function App() {
 
@@ -14,6 +15,8 @@ function App() {
     let neighbors;
     const [nodes, setNodes] = useState([]);
     const [links, setLinks] = useState([]);
+    const [paths, setpaths] = useState([]);
+    
     const cluster_color = {
         "0":"rgb(255,255,0)",
         "1":"rgb(255,0,0)",
@@ -26,6 +29,11 @@ function App() {
         "8":"rgb(0,0,0)",
         "9":"rgb(0,128,128)",
     }
+
+    
+    const d3line = d3.line()
+    .x(d => d.x)
+    .y(d => d.y);
 
  
     const findBiclusters = (i, j) => {
@@ -146,7 +154,7 @@ function App() {
                             .force('group', forceCluster()
                             .strength(0.9))
                             .force("link", d3.forceLink().strength(0).id((d) => d['id']))
-                            .force("center", d3.forceCenter(width / 2, height/2))
+                            .force("center", d3.forceCenter(width / 2, height/3))
                             .force('charge', d3.forceManyBody().strength(0.5))
                             .force('collision', d3.forceCollide()
                                   .radius(function (d) {
@@ -168,6 +176,25 @@ function App() {
                             const ticked = () => {
                                 setNodes(nodes.slice());
                                 setLinks(links.slice());
+
+                                console.log(nodeData);
+                                console.log(Esub);
+                                //データをedgebundling用に変換する
+                                let enode = {}
+                                let eedge = [];
+                    
+                                for(const node of nodeData) {
+                                    enode[node["id"]] = {"x":node["x"], "y":node["y"]}
+                                }
+                    
+                                for(const edge of Esub) {
+                                    eedge.push({"source":String(edge["source"]['id']), "target":String(edge["target"]['id'])});
+                                }
+                                const fbundling = ForceEdgeBundling()
+                                .nodes(enode)
+                                .edges(eedge);
+                                const results = fbundling();
+                                setpaths(results)
                             }
                             
                             
@@ -206,22 +233,39 @@ function App() {
             //グラフGの描画を計算する(force-directedなど)
             //d3.forceを使う
             //V(グラフの頂点を描画する)
-    
-            for(let i = 0; i < cluster_number; i++) {
-                for(let j = 0; j < i-1; j++) {
-                    // Bij <- findBiclusters(i,j)
 
-                    /*
-                    for(let k = 1; k < Bij; k++) {
-                        B_ijを描画
-                    }
-                    */
-                }
-            }
             console.log("$$$$$$$$$$");
             startSimulation(nodeData, Esub);
             console.log("########");
             //残りのエッジを描画
+
+            console.log(nodeData);
+            console.log(Esub);
+            //データをedgebundling用に変換する
+            let enode = {}
+            let eedge = [];
+
+            for(const node of nodeData) {
+                enode[node["id"]] = {"x":node["x"], "y":node["y"]}
+            }
+
+            for(const edge of Esub) {
+                eedge.push({"source":String(edge["source"]['id']), "target":String(edge["target"]['id'])});
+            }
+
+            console.log(enode);
+            console.log(eedge);
+
+            const head = document.getElementsByTagName('head')[0];
+            const scriptUrl = document.createElement('script');
+            scriptUrl.type = 'text/javascript';
+            scriptUrl.src = 'd3-ForceEdgeBundling.js';
+            head.appendChild(scriptUrl);
+
+
+
+;
+            
         }
 
 
@@ -233,7 +277,7 @@ function App() {
       <div>
         
         <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-            <g className="links">
+           {/* <g className="links">
                 {links.map((link)=> {
                     //console.log(link)
                     return(
@@ -251,7 +295,21 @@ function App() {
                     );
                 })}
             </g>
+            */}
 
+            <g className = "path">
+                {paths.map(path => {
+                   // console.log(path)
+                    return(<path 
+                    d = {d3line(path)}
+                    fill-opacity="1"
+                    stroke-width = "1"
+                    stroke= "rgb(100, 100, 100)"
+                    fill = "none"
+                        />);
+                })
+                }
+            </g>
             <g className="nodes">
                 {nodes.map((node) => {
                     return(
