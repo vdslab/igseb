@@ -7,8 +7,8 @@ function App() {
 
     //実装は隣接行列
     const cluster_number = 10;
-    const minSize = 7;
-    const mu = 0.8;
+    const minSize = 4;
+    const mu = 0.2GIT;
     const [width, height] = [1200, 800];
     const C = {0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[], 7:[], 8:[], 9:[]};
     let Esub = new Array();
@@ -151,25 +151,21 @@ function App() {
                             const simulation = d3
                             .forceSimulation()
                             .nodes(nodes)
-                            .force('group', forceCluster()
-                            .strength(0.9))
-                            .force("link", d3.forceLink().strength(0).id((d) => d['id']))
+                            .force("link", d3.forceLink().strength(0.05).id((d) => d['id']))
                             .force("center", d3.forceCenter(width / 2, height/3))
-                            .force('charge', d3.forceManyBody().strength(0.5))
+                            .force('charge', d3.forceManyBody().strength(0.1))
                             .force('collision', d3.forceCollide()
-                                  .radius(function (d) {
-                                    return 15;
-                                  })
-                                  .iterations(0.5))
+                                  .radius(() =>  10)
+                                  .iterations(0.9))
                             .force('x', d3.forceX().x(d => {
-                                return Number(d.group) * width / 11;
+                                return Number(d.group) * width / 13;
                             }
-                            ).strength(0.2))
+                            ).strength(0.9))
 
                             .force('y', d3.forceY().y(d => {
-                                return 100;
+                                return 200 + 150*(Number(d.group)%3);
                             }
-                            ).strength(0.3))
+                            ).strength(0.9))
                            
                             ;
             
@@ -302,8 +298,8 @@ function App() {
                    // console.log(path)
                     return(<path 
                     d = {d3line(path)}
-                    fill-opacity="1"
-                    stroke-width = "1"
+                    fill-opacity="0.5"
+                    stroke-width = "0.5"
                     stroke= "rgb(100, 100, 100)"
                     fill = "none"
                         />);
