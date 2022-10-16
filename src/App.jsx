@@ -7,8 +7,8 @@ function App() {
 
     //実装は隣接行列
     const cluster_number = 10;
-    const minSize = 4;
-    const mu = 0.2GIT;
+    const minSize = 1;
+    const mu = 0.1;
     const [width, height] = [1200, 800];
     const C = {0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[], 7:[], 8:[], 9:[]};
     let Esub = new Array();
@@ -26,7 +26,7 @@ function App() {
         "5":"rgb(255,0,255)",
         "6":"rgb(128,128,0)",
         "7":"rgb(128,0,128)",
-        "8":"rgb(0,0,0)",
+        "8":"rgb(255,128,0)",
         "9":"rgb(0,128,128)",
     }
 
@@ -41,7 +41,7 @@ function App() {
         //SとTはグループノードCiとCjの部分集合
         //bijはEijのエッジの部分集合
         let bij = new Array();
-        
+        console.log("( " + i + ", " + j + ")")
         //グループノードCiとCjの要素uの近傍ノードのセットkeys
         //SとTはノード
         const uset = new Set(C[i].concat(C[j]));//uset < Ci V Cj
@@ -49,10 +49,11 @@ function App() {
         //console.log(j);
         //console.log(C[i])
         //console.log(C[j])
-        //console.log(uset)
+        console.log(uset)
         const keys = [];
         for(const u of uset) {
             keys.push(neighbors[u]);
+            console.log("( " + u + ", T :" + neighbors[u] + ")")
         }
         //console.log(neighbors)
         //console.log(keys);
@@ -83,17 +84,20 @@ function App() {
 
             // SとTのエッジ
             const Etmp = [];
-            //console.log(S);
-            //console.log(T);
+            console.log("start");
+            console.log("S : " + S);
+            console.log("T :" + T);
+            console.log("end");
+
             for(const snode of S) {
                 for(const tnode of T) {
                     if(neighbors[snode].includes(tnode)) {
-                        const source  = snode <= tnode?snode:tnode;
-                        const target = snode > tnode?snode:tnode;
-
-                     
-
-                        Etmp.push({"source":source, "target":target});
+                        if((C[i].includes(snode) && C[j].includes(tnode) ) || 
+                        (C[j].includes(snode) && C[i].includes(tnode))) {
+                            const source  = snode <= tnode?snode:tnode;
+                            const target = snode > tnode?snode:tnode;
+                            Etmp.push({"source":source, "target":target});
+                        }
                     }
                 }
             }
@@ -104,7 +108,7 @@ function App() {
             }
         }
 
-        console.log(bij)
+        //console.log(bij)
         return bij.filter((x, i, array) => {
             return array.findIndex((y)=> {
                 return y.source === x.source && y.target === x.target;
@@ -139,11 +143,11 @@ function App() {
                 //console.log(Number(node["group"]))
             }
 
-            console.log(C);
+            //console.log(C);
             //const s = new Set([1, 1, 2, 2, 3].concat([2, 2, 3, 3, 4, 5]));
             //console.log(s)
-            console.log(nodeData);
-            console.log(linkData);
+            //console.log(nodeData);
+            //console.log(linkData);
 
                         //モデルのチューニング
                         const startSimulation = (nodes, links) => {
@@ -173,8 +177,8 @@ function App() {
                                 setNodes(nodes.slice());
                                 setLinks(links.slice());
 
-                                console.log(nodeData);
-                                console.log(Esub);
+                                //console.log(nodeData);
+                                //console.log(Esub);
                                 //データをedgebundling用に変換する
                                 let enode = {}
                                 let eedge = [];
@@ -186,6 +190,7 @@ function App() {
                                 for(const edge of Esub) {
                                     eedge.push({"source":String(edge["source"]['id']), "target":String(edge["target"]['id'])});
                                 }
+
                                 const fbundling = ForceEdgeBundling()
                                 .nodes(enode)
                                 .edges(eedge);
@@ -224,19 +229,23 @@ function App() {
                     return y.source === x.source && y.target === x.target;
                 }) === i
             });
-            console.log(Esub)
+          
     
             //グラフGの描画を計算する(force-directedなど)
             //d3.forceを使う
             //V(グラフの頂点を描画する)
 
             console.log("$$$$$$$$$$");
+            //console.log(Esub);
             startSimulation(nodeData, Esub);
             console.log("########");
             //残りのエッジを描画
 
+            //このデータで検証する
             console.log(nodeData);
             console.log(Esub);
+
+
             //データをedgebundling用に変換する
             let enode = {}
             let eedge = [];
@@ -249,30 +258,24 @@ function App() {
                 eedge.push({"source":String(edge["source"]['id']), "target":String(edge["target"]['id'])});
             }
 
-            console.log(enode);
-            console.log(eedge);
+            //console.log(enode);
+            //console.log(eedge);
 
             const head = document.getElementsByTagName('head')[0];
             const scriptUrl = document.createElement('script');
             scriptUrl.type = 'text/javascript';
             scriptUrl.src = 'd3-ForceEdgeBundling.js';
             head.appendChild(scriptUrl);
-
-
-
-;
-            
         }
-
-
         igseb();
+        
     }, [])
 
 
     return (
       <div>
         
-        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style ={{backgroundColor:"rgb(10, 20, 40)"}}>
            {/* <g className="links">
                 {links.map((link)=> {
                     //console.log(link)
@@ -292,15 +295,15 @@ function App() {
                 })}
             </g>
             */}
-
+           
             <g className = "path">
                 {paths.map(path => {
-                   // console.log(path)
+
                     return(<path 
                     d = {d3line(path)}
-                    fill-opacity="0.5"
-                    stroke-width = "0.5"
-                    stroke= "rgb(100, 100, 100)"
+                    fillOpacity="0.5"
+                    strokeWidth = "0.5"
+                    stroke= "rgb(255, 255, 255)"
                     fill = "none"
                         />);
                 })
