@@ -207,7 +207,7 @@ function App() {
             //console.log(linkData);
 
                         //モデルのチューニング
-                        const startSimulation = (nodes, Esub) => {
+                        const startSimulation = (nodes, Esub, link) => {
                             console.log(Esub)
                             const links = new Array();
                             let Ebi = new Array(Esub);
@@ -231,27 +231,27 @@ function App() {
                             const simulation = d3
                             .forceSimulation()
                             .nodes(nodes)
-                            .force("link", d3.forceLink().strength(0.01).distance(50).id((d) => d['id']))
+                            .force("link", d3.forceLink().strength(0.01).distance(100).id((d) => d['id']))
                             .force("center", d3.forceCenter(width / 2, height/3))
-                            .force('charge', d3.forceManyBody().strength(-1))
+                            .force('charge', d3.forceManyBody().strength(-50))
                             .force('collision', d3.forceCollide()
                                   .radius(20)
-                                  .iterations(5))
-                            .force('x', d3.forceX().x(d => {
-                                return Number(d.group) * width / 13;
-                            }
-                            ).strength(0.2))
-
-                            .force('y', d3.forceY().y(d => {
-                                return 200 + 150*(Number(d.group)%3);
-                            }
-                            ).strength(0.2))
-                           
+                                  .iterations(10)
+                                  )
+                                  .force('x', d3.forceX().x(d => {
+                                    return Number(d.group % 3) * 300 ;
+                                }
+                                ).strength(0.2))
+    
+                                .force('y', d3.forceY().y(d => {
+                                    return 120*(Number(d.group) / 3);
+                                }
+                                ).strength(0.2));
                             ;
             
                             const ticked = () => {
                                 setNodes(nodes.slice());
-                                setLinks(links.slice());
+                                setLinks(link.slice());
 
                                 //console.log(nodeData);
                                 //console.log(Esub);
@@ -271,28 +271,37 @@ function App() {
 
                                 let i = 0;
                                 Esub.map((element, key) => {
-                    
+                                   
                                     for(const e of element) {
+                                        //console.log(e);
                                         const edges = [];
+                                        const nodes = {};
+                                        const ss = new Set();
                                         for(const d of e) {
                                             const s = d[0];
                                             const t = d[1];
                                             edges.push({"source":String(s), "target":String(t)});
+                                            ss.add(s);
+                                            ss.add(t);
+                                        }
+                                        
+                                        for(const st of ss) {
+                                            nodes[st] = {"x":nodeData[st]["x"], "y":nodeData[st]["y"]}
                                         }
 
+                                        //console.log(nodes)
+                                        //console.log(edges)
                                         const fbundling = ForceEdgeBundling()
-                                        .step_size(0.8)
+                                        .step_size(0.4)
                                         .compatibility_threshold(0.6)
-                                       
-                                        .nodes(enode)
+                                        .nodes(nodes)
                                         .edges(edges);
 
                                         const result = fbundling();
 
-                                     
+                                        if(i !== -1) {
                                             results = results.concat(result);
-                                        
-
+                                        }
                                         i++;
                                     }
 
@@ -305,15 +314,13 @@ function App() {
                                 //const results = fbundling();
 
                                 //console.log(links);
-                                console.log(results);
+                                //console.log(results);
                                 setpaths(results);
                             }
                             
                             
                             simulation.nodes(nodes).on("tick", ticked);
-                            simulation.force('link').links(links);
-            
-                            
+                            simulation.force('link').links(link);
                         }
 
 
@@ -358,7 +365,7 @@ function App() {
 
             console.log("$$$$$$$$$$");
             console.log(Esub);
-            startSimulation(nodeData, Esub);
+            startSimulation(nodeData, Esub, linkData);
             console.log("########");
             //残りのエッジを描画
 
