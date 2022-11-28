@@ -231,12 +231,12 @@ function App() {
                             const simulation = d3
                             .forceSimulation()
                             .nodes(nodes)
-                            .force("link", d3.forceLink().strength(0.01).id((d) => d['id']))
+                            .force("link", d3.forceLink().strength(0.01).distance(50).id((d) => d['id']))
                             .force("center", d3.forceCenter(width / 2, height/3))
-                            .force('charge', d3.forceManyBody())
+                            .force('charge', d3.forceManyBody().strength(0))
                             .force('collision', d3.forceCollide()
-                                  .radius(() =>  15)
-                                  .iterations(0.5))
+                                  .radius(10)
+                                  .iterations(5))
                             .force('x', d3.forceX().x(d => {
                                 return Number(d.group) * width / 13;
                             }
@@ -255,9 +255,10 @@ function App() {
 
                                 //console.log(nodeData);
                                 //console.log(Esub);
-                                //データをedgebundling用に変換する
+                                //Esubデータをedgebundling用に変換する
                                 let enode = {}
                                 let eedge = [];
+                                let results = [];
                     
                                 for(const node of nodeData) {
                                     enode[node["id"]] = {"x":node["x"], "y":node["y"]}
@@ -268,14 +269,39 @@ function App() {
                                     eedge.push({"source":String(edge["source"]["id"]), "target":String(edge["target"]["id"])});
                                 }
 
-                                const fbundling = ForceEdgeBundling()
-                                .nodes(enode)
-                                .edges(eedge);
-                                
-                                const results = fbundling();
-                            
+                                Esub.map((element, key) => {
+                                    
 
-                                setpaths(results)
+                                    for(const e of element) {
+                                        const edges = [];
+                                        for(const d of e) {
+                                            const s = d[0];
+                                            const t = d[1];
+                                            edges.push({"source":String(s), "target":String(t)});
+                                        }
+
+                                        const fbundling = ForceEdgeBundling()
+                                        .step_size(0.2)
+                                        .compatibility_threshold(0.9)
+                                        .iterations(5)
+                                        .nodes(enode)
+                                        .edges(edges);
+
+                                        const result = fbundling();
+                                        results = results.concat(result);
+
+                                    }
+
+                                });
+                                
+                               // const fbundling = ForceEdgeBundling()
+                               // .nodes(enode)
+                               // .edges(eedge);
+                                
+                                //const results = fbundling();
+
+                                //console.log(links);
+                                setpaths(results);
                             }
                             
                             
@@ -374,7 +400,8 @@ function App() {
             <g className = "path">
                 {paths.map(path => {
 
-                    return(<path 
+                    return(
+                    <path 
                     d = {d3line(path)}
                     fillOpacity="0.5"
                     strokeWidth = "0.5"
