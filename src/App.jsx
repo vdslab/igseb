@@ -233,9 +233,9 @@ function App() {
                             .nodes(nodes)
                             .force("link", d3.forceLink().strength(0.01).distance(50).id((d) => d['id']))
                             .force("center", d3.forceCenter(width / 2, height/3))
-                            .force('charge', d3.forceManyBody().strength(0))
+                            .force('charge', d3.forceManyBody().strength(-1))
                             .force('collision', d3.forceCollide()
-                                  .radius(10)
+                                  .radius(20)
                                   .iterations(5))
                             .force('x', d3.forceX().x(d => {
                                 return Number(d.group) * width / 13;
@@ -264,14 +264,14 @@ function App() {
                                     enode[node["id"]] = {"x":node["x"], "y":node["y"]}
                                 }
                     
-                                for(const edge of links) {
+                               /* for(const edge of links) {
                                     //console.log(edge)
                                     eedge.push({"source":String(edge["source"]["id"]), "target":String(edge["target"]["id"])});
-                                }
+                                }*/
 
+                                let i = 0;
                                 Esub.map((element, key) => {
-                                    
-
+                    
                                     for(const e of element) {
                                         const edges = [];
                                         for(const d of e) {
@@ -281,15 +281,19 @@ function App() {
                                         }
 
                                         const fbundling = ForceEdgeBundling()
-                                        .step_size(0.2)
-                                        .compatibility_threshold(0.9)
-                                        .iterations(5)
+                                        .step_size(0.8)
+                                        .compatibility_threshold(0.6)
+                                       
                                         .nodes(enode)
                                         .edges(edges);
 
                                         const result = fbundling();
-                                        results = results.concat(result);
 
+                                     
+                                            results = results.concat(result);
+                                        
+
+                                        i++;
                                     }
 
                                 });
@@ -301,6 +305,7 @@ function App() {
                                 //const results = fbundling();
 
                                 //console.log(links);
+                                console.log(results);
                                 setpaths(results);
                             }
                             
